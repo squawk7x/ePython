@@ -1,41 +1,54 @@
 '''
 
-It supplies the function gcd(a: int, b: int) -> int
-to calculate the greatest common divisor of two intergers a and b.
+This module supplies the function gcd(a: int, b: int) -> int
+to calculate the greatest common divisor of two positive intergers a and b.
+
 For example:
 >>> gcd(12, 9)
 3
-
-Furthermore it supplies the function lcm(a: int, b: int) -> int
-to calculate the lowest common multiple of two integers a and b.
-For example:
->>> lcm(12, 9)
-36
 
 '''
 
 
 def gcd(a, b):
     '''
-    Compute greatest common divisor of two integers a and b
+    Compute greatest common divisor of two positive integers a and b.
     >>> gcd(18, 10)
     2
     '''
+
+    if type(a) not in [int] or type(b) not in [int]:
+        raise TypeError("function arguments must be integers")
+
+    if a <= 0 or b <= 0:
+        raise ValueError("function arguments must be positive")
+
     while b:
         # print(f'{a}:{b} = {divmod(a,b)}')
         a, b = b, a % b
     return a
 
 
-def lcm(a, b):
-    '''
-    Compute lowest common multiple of two integers a and b
-    >>> lcm(15, 10)
-    30
-    '''
-    return int((a * b) / gcd(a, b))
-
-
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+    import argparse
+    #import doctest
+    # doctest.testmod()
+
+    parser = argparse.ArgumentParser(description="Calculates the \
+    greatest common divisor of two positive integer numbers 'a' and 'b'.")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-v", "--verbose", action="store_true")
+    group.add_argument("-q", "--quiet", action="store_true")
+    parser.add_argument("a", type=int, help="1st integer number")
+    parser.add_argument("b", type=int, help="2nd integer number")
+
+    args = parser.parse_args()
+    result = gcd(args.a, args.b)
+
+    if args.quiet:
+        print(result)
+    elif args.verbose:
+        print(
+            f"The greatest common divisor of {args.a} and {args.b} equals {result}")
+    else:
+        print(f"gcd({args.a}, {args.b}) = {result}")
