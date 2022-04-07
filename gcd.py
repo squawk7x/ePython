@@ -12,7 +12,7 @@ For example:
 
 def gcd(a, b):
     '''
-    Compute greatest common divisor of two positive integers a and b.
+    Compute greatest common divisor of two positive integers a and b
     >>> gcd(18, 10)
     2
     '''
