@@ -37,13 +37,5 @@ def lcm(a, b):
 
 
 if __name__ == "__main__":
-    import dis
     import doctest
-
     doctest.testmod()
-
-    dis.dis(gcd)
-    dis.dis(lcm)
-
-#    print(gcd(12, 9))
-#    print(lcm(12, 9))
