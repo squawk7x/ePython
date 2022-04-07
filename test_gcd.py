@@ -12,11 +12,13 @@ class TestGcd(unittest.TestCase):
     Test Class
     '''
 
-    def test_gcd(self):
+    def test_result(self):
         '''
-        Testing correct result with integers
+        Testing correct result
         '''
         self.assertAlmostEqual(gcd(18, 12), 6)
+        self.assertAlmostEqual(gcd(13, 5), 1)
+        self.assertAlmostEqual(gcd(6, 21), 3)
 
     def test_types(self):
         '''
