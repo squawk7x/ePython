@@ -1,6 +1,6 @@
 '''
 
-It supplies the function gcd(a: int, b: int) -> int
+This module supplies the function gcd(a: int, b: int) -> int
 to calculate the greatest common divisor of two intergers a and b.
 For example:
 >>> gcd(12, 9)
@@ -21,6 +21,13 @@ def gcd(a, b):
     >>> gcd(18, 10)
     2
     '''
+
+    if type(a) not in [int] or type(b) not in [int]:
+        raise TypeError("function arguments must be integers")
+
+    if a <= 0 or b <= 0:
+        raise ValueError("function arguments must be positive")
+
     while b:
         # print(f'{a}:{b} = {divmod(a,b)}')
         a, b = b, a % b
