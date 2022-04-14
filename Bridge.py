@@ -6,11 +6,11 @@ import os
 import random
 import threading
 from datetime import date
-import keyboard
+import pickle
 
+import keyboard
 import g_client
 import g_server
-import pickle
 
 suits = ['\u2666', '\u2665', '\u2660', '\u2663']
 ranks = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
@@ -19,6 +19,7 @@ reset_color = '\033[0m'
 
 
 class Card:
+    ''' Card layout by suit and rank '''
 
     def __init__(self, suit, rank):
         if suit in suits and rank in ranks:
@@ -228,6 +229,7 @@ deck = Deck()
 
 
 class Handdeck:
+    ''' The cards in one players hand '''
 
     def __init__(self):
         self.cards = []
@@ -320,15 +322,16 @@ class Handdeck:
 
 
 class Player:
-    name = None
-    is_robot = False
-    hand = None
-    score = 0
+    # name = None
+    # is_robot = False
+    # score = 0
+    # hand = None
 
-    def __init__(self, name: str, is_robot: bool, nickname=None):
+    def __init__(self, name, is_robot):
         self.name = name
         self.is_robot = is_robot
         self.hand = Handdeck()
+        self.score = 0
 
     def __lt__(self, other):
         if self.score < other.score:
@@ -369,6 +372,7 @@ class Player:
         print(cards)
 
     def show_possible_cards(self):
+        ''' show the possible cards '''
         cards = ''
         self.hand.get_possible_cards()
         for card in self.hand.possible_cards:
@@ -379,6 +383,7 @@ class Player:
         print(cards)
 
     def draw_card_from_blind(self, cards=1):
+        ''' Card 'flow' when drawing a card from blind '''
         for card in range(cards):
             card = deck.card_from_blind()
             self.hand.cards.append(card)
@@ -415,6 +420,7 @@ class Player:
             return False
 
     def play_card(self, is_initial_card=False):
+        ''' Remove card from handdeck and put it on the stack '''
         if not self.is_robot:
             self.hand.arrange_hand_cards()
         if is_initial_card:
@@ -430,12 +436,15 @@ class Player:
             bridge.push_data_to_server()
 
     def set_robot(self, is_robot=False):
+        ''' '''
         self.is_robot = is_robot
 
     def is_robot(self):
+        ''' '''
         return self.is_robot
 
     def auto_play(self):
+        ''' Card 'flow' when robots play '''
         # self.hand.arrange_hand_cards()
         while self.hand.possible_cards:
             self.play_card()
@@ -446,23 +455,22 @@ class Player:
 
 
 class Bridge:
+    ''' Classic Bridge Game for 2-4 players '''
     player = None
     shuffler = None
-    number_of_players = 0
-    player_list = []
-    number_of_rounds = 0
-    number_of_games = 0
-    is_robot_game = None
 
     gc = None
 
-    def __init__(self, number_of_players: int, is_robot_game: bool):
+    def __init__(self, number_of_players=None, is_robot_game=None):
 
-        if number_of_players == 0:
+        self.number_of_games = 0
+        self.number_of_rounds = 0
+        self.player_list = []
+
+        if not number_of_players:
             while True:
                 try:
-                    print("Enter number of players (2-4):")
-                    num = keyboard.read_hotkey(suppress=False)
+                    num = input("Enter number of players (2-4):")
                     self.number_of_players = int(num)
                 except ValueError:
                     print('Valid number, please')
@@ -470,16 +478,14 @@ class Bridge:
                 if 2 <= self.number_of_players <= 4:
                     print(f'\nGame with {self.number_of_players} players')
                     break
-                else:
-                    print('Please enter value between 2 and 4')
+                print('Please enter value between 2 and 4')
         else:
             self.number_of_players = number_of_players
 
         if not is_robot_game:
             while True:
                 try:
-                    print("Play against Robots (y)es or (n)o:")
-                    robot = keyboard.read_hotkey(suppress=False)
+                    robot = input("Play against Robots (y)es or (n)o:")
                     if robot == 'n':
                         self.is_robot_game = False
                         print(f'\nYou play all {self.number_of_players - 1} '
@@ -502,12 +508,11 @@ class Bridge:
         try:
             os.remove(f'{date.today()}_scores.txt')
         except OSError as e:
-            print('no scorelist found')
+            print('no scorelist found', e)
 
     def print_the_rules_of_the_game(self):
-
-        the_rules_of_the_game = f'''
-
+        ''' Printing the Rules of the Game '''
+        print(f'''
         {30 * " "}Game of Bridge
 
         Rules Of The Game:
@@ -568,10 +573,10 @@ class Bridge:
 
         The game is over once a player reaches more than 125 points.
 
-        '''
-        print(the_rules_of_the_game)
+        ''')
 
     def start_game(self):
+        ''' Starting a new game '''
         # if self.is_server or not self.is_online:
         self.number_of_games += 1
         self.number_of_rounds = 0
@@ -590,6 +595,7 @@ class Bridge:
         # self.pull_data_from_server()
 
     def start_round(self):
+        ''' Starting a new round '''
         self.number_of_rounds += 1
 
         # if self.is_server or not self.is_online:
@@ -607,7 +613,7 @@ class Bridge:
     # self.pull_data_from_server()
 
     def set_shuffler(self):
-
+        ''' The player who lost last round will be the next shuffler '''
         if self.shuffler is None:
             self.shuffler = self.player_list[0]
         else:
@@ -619,11 +625,12 @@ class Bridge:
         return self.shuffler
 
     def cycle_playerlist(self):
+        ''' Keep the players in the correct order '''
         self.player_list.append(self.player_list.pop(0))
         self.player = self.player_list[0]
 
     def activate_next_player(self):
-
+        ''' When a move is finished the next player must be activated '''
         sevens = 0
         eights = 0
         aces = 0
@@ -699,18 +706,17 @@ class Bridge:
             self.push_data_to_server()
 
     def show_full_deck(self):
+        ''' Showing blind, stack and the players cards '''
         print(f'\n{84 * "-"}\n')
         self.show_all_players(deck.is_visible)
 
         deck.show()
         self.player.show()
-
         '''
-            for player in self.player_list:
-                    if player.name == 'Player-1':
-                            player.show()
-            '''
-
+        for player in self.player_list:
+                if player.name == 'Player-1':
+                        player.show()
+        '''
         print(f'\n'
               f'\n{7 * " "}| TAB: toggle |  SHIFT: put  |  ALT: draw  |'
               f'\n{7 * " "}|            SPACE: next Player            |'
@@ -720,6 +726,7 @@ class Bridge:
             print(f'{7 * " "}| {g_server.G_Server.get_nicknames()} |')
 
     def make_choice_for_J(self):
+        ''' Choose color with <TAB> when 'J' was played '''
         if self.player.is_robot:
             jchoice.j = jchoice.js[random.randint(0, 3)]
         else:
@@ -925,7 +932,6 @@ class Bridge:
             self.gc.write(data)
 
     def start_client(self):
-
         if not self.gc:
             self.gc = g_client.G_Client()
             gc_thread = threading.Thread(target=self.gc.run(), daemon=True)
@@ -937,7 +943,7 @@ class Bridge:
             self.gc = None
 
     def play(self):
-
+        ''' Controlling the Game '''
         while True:
 
             self.show_full_deck()
@@ -1020,15 +1026,16 @@ class Bridge:
                     for suit in suits:
                         self.player.hand.cards.append(Card(suit, 'J'))
                 elif key == 'ctrl+a':
-                        for suit in suits:
-                                self.player.hand.cards.append(Card(suit, 'A'))
+                    for suit in suits:
+                        self.player.hand.cards.append(Card(suit, 'A'))
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Bridge", \
+    parser = argparse.ArgumentParser("Bridge",
                                      description=Bridge.print_the_rules_of_the_game(None))
-    parser.add_argument("--number_of_players", "-p", \
+    parser.add_argument("--number_of_players", "-p",
                         type=int, choices=[2, 3, 4], help="number of players")
-    parser.add_argument("--is_robot_game", "-r", \
+    parser.add_argument("--is_robot_game", "-r",
                         type=bool, choices=[True], help="play against robots")
     try:
         args = parser.parse_args()

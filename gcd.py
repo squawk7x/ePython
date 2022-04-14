@@ -30,9 +30,25 @@ def gcd(a, b):
 
 
 if __name__ == "__main__":
-    import argparse
-    #import doctest
+    import logging
+
+    LOG_FORMAT = '%(levelname)s %(asctime)s - %(message)s'
+    logging.basicConfig(filename='gcd.log',
+                        level=logging.DEBUG,
+                        format=LOG_FORMAT)
+    logger = logging.getLogger()
+    # Test messages
+    logger.debug('debug...')
+    logger.info('info...')
+    logger.warning('warning...')
+    logger.error('error...')
+    logger.critical('critical')
+#    print(logger.level)
+
+    # import doctest
     # doctest.testmod()
+
+    import argparse
 
     parser = argparse.ArgumentParser(description="Calculates the \
     greatest common divisor of two positive integer numbers 'a' and 'b'.")
@@ -49,6 +65,7 @@ if __name__ == "__main__":
         print(result)
     elif args.verbose:
         print(
-            f"The greatest common divisor of {args.a} and {args.b} equals {result}")
+            f"The greatest common divisor of {args.a} and {args.b} \
+            equals {result}")
     else:
         print(f"gcd({args.a}, {args.b}) = {result}")
