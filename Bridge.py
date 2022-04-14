@@ -1,3 +1,6 @@
+'''
+Classic Game of Bridge for 2-4 Players or 1 Player against Robots
+'''
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -372,7 +375,7 @@ class Player:
         print(cards)
 
     def show_possible_cards(self):
-        ''' show the possible cards '''
+        ''' Show the possible cards of a handdeck in accordance to the card on the stack '''
         cards = ''
         self.hand.get_possible_cards()
         for card in self.hand.possible_cards:
@@ -383,7 +386,8 @@ class Player:
         print(cards)
 
     def draw_card_from_blind(self, cards=1):
-        ''' Card 'flow' when drawing a card from blind '''
+        ''' Drawing a card from blind and append it to the handdeck and
+        register the drawn card for further game logik'''
         for card in range(cards):
             card = deck.card_from_blind()
             self.hand.cards.append(card)
