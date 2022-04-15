@@ -7,13 +7,9 @@ Classic Game of Bridge for 2-4 Players or 1 Player against Robots
 import argparse
 import os
 import random
-import threading
 from datetime import date
-import pickle
-
+#import pickle
 import keyboard
-import g_client
-import g_server
 
 suits = ['\u2666', '\u2665', '\u2660', '\u2663']
 ranks = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
@@ -75,6 +71,8 @@ class Card:
 
 
 class Jsuit:
+    ''' Representing special card 'J' by 2 suits '''
+
     def __init__(self, suit, color):
         self.suit = suit
         self.color = color
@@ -94,7 +92,8 @@ class Jsuit:
 
 
 class Jchoice:
-    js = []  # array of suits for 'J'
+    ''' Choose a Jsuits '''
+    js = []
     j = None
 
     def __init__(self):
@@ -134,7 +133,7 @@ jchoice = Jchoice()
 
 
 class Deck:
-    is_visible = False
+    ''' The play board '''
 
     def __init__(self):
         self.blind = []
@@ -142,6 +141,7 @@ class Deck:
         self.cards_played = []
         self.bridge_monitor = []
         self.shufflings = 1
+        self.is_visible = False
 
         for suit in suits:
             for rank in ranks:
@@ -279,7 +279,7 @@ class Handdeck:
         stack_card = deck.get_top_card_from_stack()
 
         '''
-	1st move:
+        1st move:
         ---------
         general rule:         suit   rank    J
         if stack_card = 'J': Jsuit           J
@@ -325,10 +325,7 @@ class Handdeck:
 
 
 class Player:
-    # name = None
-    # is_robot = False
-    # score = 0
-    # hand = None
+    ''' The player '''
 
     def __init__(self, name, is_robot):
         self.name = name
@@ -375,7 +372,6 @@ class Player:
         print(cards)
 
     def show_possible_cards(self):
-        ''' Show the possible cards of a handdeck in accordance to the card on the stack '''
         cards = ''
         self.hand.get_possible_cards()
         for card in self.hand.possible_cards:
@@ -386,15 +382,13 @@ class Player:
         print(cards)
 
     def draw_card_from_blind(self, cards=1):
-        ''' Drawing a card from blind and append it to the handdeck and
-        register the drawn card for further game logik'''
         for card in range(cards):
             card = deck.card_from_blind()
             self.hand.cards.append(card)
             self.hand.cards_drawn.append(card)
 
-        if bridge.gc:
-            bridge.push_data_to_server()
+        # if bridge.gc:
+        #    bridge.push_data_to_server()
 
     def is_must_draw_card(self):
         '''
@@ -424,7 +418,6 @@ class Player:
             return False
 
     def play_card(self, is_initial_card=False):
-        ''' Remove card from handdeck and put it on the stack '''
         if not self.is_robot:
             self.hand.arrange_hand_cards()
         if is_initial_card:
@@ -435,9 +428,6 @@ class Player:
             self.hand.cards.remove(card)
             deck.put_card_on_stack(card)
             jchoice.clear_j()
-
-        if bridge.gc:
-            bridge.push_data_to_server()
 
     def set_robot(self, is_robot=False):
         ''' '''
@@ -460,16 +450,14 @@ class Player:
 
 class Bridge:
     ''' Classic Bridge Game for 2-4 players '''
-    player = None
-    shuffler = None
-
-    gc = None
 
     def __init__(self, number_of_players=None, is_robot_game=None):
 
         self.number_of_games = 0
         self.number_of_rounds = 0
         self.player_list = []
+        self.player = None
+        self.shuffler = None
 
         if not number_of_players:
             while True:
@@ -515,7 +503,7 @@ class Bridge:
             print('no scorelist found', e)
 
     def print_the_rules_of_the_game(self):
-        ''' Printing the Rules of the Game '''
+
         print(f'''
         {30 * " "}Game of Bridge
 
@@ -580,7 +568,6 @@ class Bridge:
         ''')
 
     def start_game(self):
-        ''' Starting a new game '''
         # if self.is_server or not self.is_online:
         self.number_of_games += 1
         self.number_of_rounds = 0
@@ -599,7 +586,6 @@ class Bridge:
         # self.pull_data_from_server()
 
     def start_round(self):
-        ''' Starting a new round '''
         self.number_of_rounds += 1
 
         # if self.is_server or not self.is_online:
@@ -617,7 +603,6 @@ class Bridge:
     # self.pull_data_from_server()
 
     def set_shuffler(self):
-        ''' The player who lost last round will be the next shuffler '''
         if self.shuffler is None:
             self.shuffler = self.player_list[0]
         else:
@@ -629,12 +614,10 @@ class Bridge:
         return self.shuffler
 
     def cycle_playerlist(self):
-        ''' Keep the players in the correct order '''
         self.player_list.append(self.player_list.pop(0))
         self.player = self.player_list[0]
 
     def activate_next_player(self):
-        ''' When a move is finished the next player must be activated '''
         sevens = 0
         eights = 0
         aces = 0
@@ -706,11 +689,7 @@ class Bridge:
                     aces += 1
                 leap += 1
 
-        if self.gc:
-            self.push_data_to_server()
-
     def show_full_deck(self):
-        ''' Showing blind, stack and the players cards '''
         print(f'\n{84 * "-"}\n')
         self.show_all_players(deck.is_visible)
 
@@ -726,11 +705,7 @@ class Bridge:
               f'\n{7 * " "}|            SPACE: next Player            |'
               f'\n{7 * " "}|  (s)cores   |   (r)ules    |   (q)uit    |')
 
-        if self.gc:
-            print(f'{7 * " "}| {g_server.G_Server.get_nicknames()} |')
-
     def make_choice_for_J(self):
-        ''' Choose color with <TAB> when 'J' was played '''
         if self.player.is_robot:
             jchoice.j = jchoice.js[random.randint(0, 3)]
         else:
@@ -850,7 +825,6 @@ class Bridge:
             return False
 
     def is_next_player_possible(self):
-
         if self.check_if_bridge():
             self.finish_round()
             return False
@@ -897,57 +871,7 @@ class Bridge:
             else:
                 return False
 
-    '''
-    def push_data_to_server(self):
-            if self.is_client and self.is_online:
-                    exchange_data = [deck.__dict__, self.__dict__]
-
-                    for player in self.player_list:
-                            exchange_data.append(player.__dict__)
-
-                    data_to_server = pickle.dumps(exchange_data)
-                    client.upload_data(data_to_server)
-
-    def pull_data_from_server(self):
-            data_from_server = pickle.loads(client.deliver_data())
-            deck.__dict__ = data_from_server[0]
-            self.__dict__ = data_from_server[1]
-            self.player_list[0].__dict__ = data_from_server[2]
-            self.player_list[1].__dict__ = data_from_server[3]
-            self.player_list[2].__dict__ = data_from_server[4]
-    '''
-
-    def push_data_to_server(self):
-
-        if self.gc:
-            # data = [deck.__dict__, self.__dict__]
-            # data = [deck.__dict__]
-            #
-            # for player in self.player_list:
-            # 	data.append(player.__dict__)
-            #
-            # bdata = pickle.dumps(data)
-            #
-            # self.gc.write(bdata)
-
-            data = pickle.dumps(deck.__dict__)
-
-            # data = 'data'.encode()
-            self.gc.write(data)
-
-    def start_client(self):
-        if not self.gc:
-            self.gc = g_client.G_Client()
-            gc_thread = threading.Thread(target=self.gc.run(), daemon=True)
-            gc_thread.start()
-
-    def stop_client(self):
-        if self.gc:
-            self.gc.stop()
-            self.gc = None
-
     def play(self):
-        ''' Controlling the Game '''
         while True:
 
             self.show_full_deck()
@@ -989,34 +913,6 @@ class Bridge:
                         deck.is_visible = True
                 elif key == 'ctrl+r':
                     self.start_round()
-
-                    '''
-                      is      is     Server
-                    Client  Server  available    Online
-                       1       1        1          1
-                       1       1        0          0
-                       1       0        1          1
-                       1       0        0          0
-                       0       1        1          0
-                       0       1        0          0
-                       0       0        1          0
-                       0       0        0          0
-
-                    ->
-                    if is_client and is_server_available   1
-                    (1 player: is_server)
-                    '''
-
-                elif key == 'ctrl+p':
-                    if not self.gc:
-                        self.start_client()
-                    else:
-                        self.stop_client()
-
-                elif key == 'ctrl+o':
-                    if self.gc:
-                        self.gc.write('abc123'.encode())
-
                 elif key == 'ctrl+6':
                     for suit in suits:
                         self.player.hand.cards.append(Card(suit, '6'))
