@@ -5,7 +5,7 @@ Lichtzeitpegel am Düsseldorfer Rheinturm
 import time
 
 
-def show_time(delay=1):
+def lichtzeitpegel(delay=1):
     ''' Dezimaluhr '''
 
     while True:
@@ -26,4 +26,4 @@ def show_time(delay=1):
 
 
 if __name__ == '__main__':
-    show_time()
+    lichtzeitpegel()

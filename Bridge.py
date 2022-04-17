@@ -8,8 +8,11 @@ import argparse
 import os
 import random
 from datetime import date
-#import pickle
+import asyncio
+import pickle
+
 import keyboard
+from async_echo_client import tcp_echo_client
 
 suits = ['\u2666', '\u2665', '\u2660', '\u2663']
 ranks = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
@@ -294,17 +297,22 @@ class Handdeck:
         if not deck.cards_played:
             if stack_card.rank == 'J':
                 for card in self.cards:
-                    if card.suit == jchoice.get_j_suit() or card.rank == 'J':
+                    if card.suit == jchoice.get_j_suit() or \
+                       card.rank == 'J':
                         self.possible_cards.append(card)
             else:
                 for card in self.cards:
-                    if card.rank == stack_card.rank or card.suit == stack_card.suit or card.rank == 'J':
+                    if card.rank == stack_card.rank or \
+                       card.suit == stack_card.suit or \
+                       card.rank == 'J':
                         self.possible_cards.append(card)
         # 2nd move
         if deck.cards_played:
             if stack_card.rank == '6':
                 for card in self.cards:
-                    if card.rank == stack_card.rank or card.suit == stack_card.suit or card.rank == 'J':
+                    if card.rank == stack_card.rank or \
+                       card.suit == stack_card.suit or \
+                       card.rank == 'J':
                         self.possible_cards.append(card)
             elif stack_card.rank == 'J':
                 for card in self.cards:
@@ -387,32 +395,31 @@ class Player:
             self.hand.cards.append(card)
             self.hand.cards_drawn.append(card)
 
-        # if bridge.gc:
-        #    bridge.push_data_to_server()
-
     def is_must_draw_card(self):
         '''
         must draw card, if:
         ---------------------------------
          card   possible  card    pull  next player
         played    card    drawn   card  possible
-                1       1       1       N       Y
-                1       1       0       N       Y
-                1       0       1       N       Y
-                1       0       0       N       Y
-                0       1       1       N       N
-                0       1       0       N       N
-                0       0       1       N       Y
-                0       0       0       Y       N   <-- must draw card
+            1       1       1       N       Y
+            1       1       0       N       Y
+            1       0       1       N       Y
+            1       0       0       N       Y
+            0       1       1       N       N
+            0       1       0       N       N
+            0       0       1       N       Y
+            0       0       0       Y       N   <-- must draw card
         '6' on stack:
         -------------
-                1		0		1		Y       N   <-- must draw card
+            1       0       1       Y       N   <-- must draw card
         '''
 
         stack_card = deck.get_top_card_from_stack()
         if stack_card.rank == '6' and not self.hand.possible_cards:
             return True
-        if not deck.cards_played and not self.hand.possible_cards and not self.hand.cards_drawn:
+        if not deck.cards_played and \
+           not self.hand.possible_cards and \
+           not self.hand.cards_drawn:
             return True
         else:
             return False
@@ -515,9 +522,10 @@ class Bridge:
         The next player can play first card either same suit or same rank
         and can play more cards with same rank. At first the cards on hand
         must be used and at least 1 card must be played. If the player
-        does not have a suitable card - a card must be drawn from blind
-        and the next player continues the round. No more than one card can
-         be drawn from blind, except a '6' on the stack must be covered.
+        does not have a suitable card - a card must be drawn from blind.
+        This card may be played if it fits to the card on stack or the
+        next player continues. No more than one card can be drawn from blind,
+        except a '6' on the stack must be covered.
 
         Special Cards:
         --------------
@@ -541,8 +549,8 @@ class Bridge:
 
         Counting:
         ---------
-        A round is over when one player has no more cards.
-        The players note their points.
+        
+        The players note their points when one eplayer has no more cards.
 
         These are the card values:
          6: 0
@@ -563,7 +571,9 @@ class Bridge:
         the points of this round are doubled (trippled, ...).
         The player with the highest score starts the next round.
 
-        The game is over once a player reaches more than 125 points.
+        The round is over once a player reaches more than 125 points.
+
+        During the game you can play several rounds.
 
         ''')
 
@@ -688,6 +698,14 @@ class Bridge:
                     self.cycle_playerlist()
                     aces += 1
                 leap += 1
+
+        msg = pickle.dumps(vars(self))
+        data = asyncio.run(tcp_echo_client(msg))
+        self.__dict__ = pickle.loads(data)
+
+        msg = pickle.dumps(vars(deck))
+        data = asyncio.run(tcp_echo_client(msg))
+        deck.__dict__ = pickle.loads(data)
 
     def show_full_deck(self):
         print(f'\n{84 * "-"}\n')
@@ -845,28 +863,28 @@ class Bridge:
             if deck.cards_played:
                 self.make_choice_for_J()
                 return True
-        '''
+            '''
             next player possible, (except 6 on stack) if:
 
-                     card   possible  card    next
-                    played    card    drawn   player
-                            1       1       1       Y
-                            1       1       0       Y
-                            1       0       1       Y
-                            1       0       0       Y
-                            0       1       1       N
-                            0       1       0       N
-                            0       0       1       Y
-                            0       0       0       N       <-- must draw card
-                                                                                                            &
-                       0/1     0/1     0/1      N       <-- when '6'
+                 card   possible  card    next
+                played    card    drawn   player
+                        1       1       1       Y
+                        1       1       0       Y
+                        1       0       1       Y
+                        1       0       0       Y
+                        0       1       1       N
+                        0       1       0       N
+                        0       0       1       Y
+                        0       0       0       N       <-- must draw card
+                       0/1     0/1     0/1      N       <-- & when '6'
             '''
 
         if deck.cards_played:
             return True
 
         elif not deck.cards_played:
-            if not self.player.hand.possible_cards and self.player.hand.cards_drawn:
+            if not self.player.hand.possible_cards and \
+               self.player.hand.cards_drawn:
                 return True
             else:
                 return False
@@ -877,7 +895,8 @@ class Bridge:
             self.show_full_deck()
 
             if self.player.is_robot:
-                while not self.is_next_player_possible() or self.player.hand.possible_cards:
+                while not self.is_next_player_possible() or \
+                        self.player.hand.possible_cards:
                     self.player.auto_play()
                 key = keyboard.read_hotkey(suppress=False)
                 if key == 'space':

@@ -39,7 +39,9 @@ async def echo_handler(loop, client):
                 print('Someone left:', client)
                 break
             for clt in clients:
-                await loop.sock_sendall(clt, b'Got:' + data)
+                # await loop.sock_sendall(clt, b'Got:' + data)
+                await loop.sock_sendall(clt, data)
+
     print('Connection closed')
 
 if __name__ == '__main__':
