@@ -549,7 +549,7 @@ class Bridge:
 
         Counting:
         ---------
-        
+
         The players note their points when one eplayer has no more cards.
 
         These are the card values:
@@ -699,6 +699,7 @@ class Bridge:
                     aces += 1
                 leap += 1
 
+        '''
         msg = pickle.dumps(vars(self))
         data = asyncio.run(tcp_echo_client(msg))
         self.__dict__ = pickle.loads(data)
@@ -706,18 +707,20 @@ class Bridge:
         msg = pickle.dumps(vars(deck))
         data = asyncio.run(tcp_echo_client(msg))
         deck.__dict__ = pickle.loads(data)
+        '''
 
     def show_full_deck(self):
         print(f'\n{84 * "-"}\n')
         self.show_all_players(deck.is_visible)
-
         deck.show()
+
         self.player.show()
         '''
         for player in self.player_list:
-                if player.name == 'Player-1':
-                        player.show()
+            if player.name == 'Player-1':
+                player.show()
         '''
+
         print(f'\n'
               f'\n{7 * " "}| TAB: toggle |  SHIFT: put  |  ALT: draw  |'
               f'\n{7 * " "}|            SPACE: next Player            |'
