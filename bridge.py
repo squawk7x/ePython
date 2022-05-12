@@ -2,25 +2,24 @@
 # -*- coding: utf-8 -*-
 
 '''
-Classic Game of Bridge for 2-4 Players or 1 Player against Robots
+Classic Card Game for 2-4 Players or 1 Player against Robots
 '''
 
-
+import sys
 import argparse
 import os
 import random
 from datetime import date
-import pickle
-
 import keyboard
 
 suits = ['\u2666', '\u2665', '\u2660', '\u2663']
 ranks = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 suit_colors = ['\033[95m', '\033[91m', '\033[93m', '\033[94m']
-reset_color = '\033[0m'
+RESET_COLOR = '\033[0m'
 
 
 class Card:
+    ''' Card definition - 4 ranks with values from 6 to Ace'''
 
     def __init__(self, suit, rank):
         if suit in suits and rank in ranks:
@@ -31,26 +30,24 @@ class Card:
     def __str__(self):
         card = None
         if self.suit == '\u2666':
-            card = f'{suit_colors[0]}{self.suit}{self.rank}{reset_color} '
+            card = f'{suit_colors[0]}{self.suit}{self.rank}{RESET_COLOR} '
         elif self.suit == '\u2665':
-            card = f'{suit_colors[1]}{self.suit}{self.rank}{reset_color} '
+            card = f'{suit_colors[1]}{self.suit}{self.rank}{RESET_COLOR} '
         elif self.suit == '\u2660':
-            card = f'{suit_colors[2]}{self.suit}{self.rank}{reset_color} '
+            card = f'{suit_colors[2]}{self.suit}{self.rank}{RESET_COLOR} '
         elif self.suit == '\u2663':
-            card = f'{suit_colors[3]}{self.suit}{self.rank}{reset_color} '
+            card = f'{suit_colors[3]}{self.suit}{self.rank}{RESET_COLOR} '
         return card
 
     def __lt__(self, other):
         if self.get_value() < other.get_value():
             return True
-        else:
-            return False
+        return False
 
     def __gt__(self, other):
         if self.get_value() > other.get_value():
             return True
-        else:
-            return False
+        return False
 
     def get_suit(self):
         return self.suit
@@ -73,14 +70,14 @@ class Card:
 
 
 class Jsuit:
-    ''' Representing special card 'J' by 2 suits '''
+    ''' Representing special representation of card 'J' by 2 suits '''
 
     def __init__(self, suit, color):
         self.suit = suit
         self.color = color
 
     def __str__(self):
-        sign = f'{self.color}{self.suit}{self.suit}{reset_color} '
+        sign = f'{self.color}{self.suit}{self.suit}{RESET_COLOR} '
         return sign
 
     def __eq__(self, other):
@@ -95,12 +92,13 @@ class Jsuit:
 
 class Jchoice:
     ''' Choose a Jsuits '''
-    js = []
-    j = None
+    # js = []
+    # j = None
 
     def __init__(self):
         self.js = [Jsuit('\u2666', '\033[95m'), Jsuit('\u2665', '\033[91m'),
                    Jsuit('\u2660', '\033[93m'), Jsuit('\u2663', '\033[94m')]
+        self.j = None
 
     def toggle_js(self):
         self.js.insert(0, self.js.pop())
@@ -117,8 +115,7 @@ class Jchoice:
     def get_j(self):
         if self.j:
             return self.j
-        else:
-            return ''
+        return ''
 
     def get_j_suit(self):
         if self.j:
@@ -135,7 +132,7 @@ jchoice = Jchoice()
 
 
 class Deck:
-    ''' The play board '''
+    ''' The game board with blind and stack '''
 
     def __init__(self):
         self.blind = []
@@ -177,9 +174,8 @@ class Deck:
             self.shufflings += 1
         if self.blind:
             return self.blind.pop()
-        else:
-            print('not enough cards available')
-            exit()
+        print('not enough cards available')
+        sys.exit()
 
     def show_stack(self, visible=True):
         stack = ''
@@ -292,6 +288,7 @@ class Handdeck:
         if stack_card = '6': suit     '6'
         if stack_card = 'J':          'J'
         '''
+
         # 1st move:
         if not deck.cards_played:
             if stack_card.rank == 'J':
@@ -332,7 +329,7 @@ class Handdeck:
 
 
 class Player:
-    ''' The player '''
+    ''' The player - human or robot '''
 
     def __init__(self, name, is_robot):
         self.name = name
@@ -343,14 +340,12 @@ class Player:
     def __lt__(self, other):
         if self.score < other.score:
             return True
-        else:
-            return False
+        return False
 
     def __gt__(self, other):
         if self.score > other.score:
             return True
-        else:
-            return False
+        return False
 
     def draw_new_cards(self):
         self.hand.__init__()
@@ -420,8 +415,7 @@ class Player:
            not self.hand.possible_cards and \
            not self.hand.cards_drawn:
             return True
-        else:
-            return False
+        return False
 
     def play_card(self, is_initial_card=False):
         if not self.is_robot:
@@ -436,11 +430,9 @@ class Player:
             jchoice.clear_j()
 
     def set_robot(self, is_robot=False):
-        ''' '''
         self.is_robot = is_robot
 
     def is_robot(self):
-        ''' '''
         return self.is_robot
 
     def auto_play(self):
@@ -455,7 +447,7 @@ class Player:
 
 
 class Bridge:
-    ''' Classic Bridge Game for 2-4 players '''
+    ''' A Classic Card Game for 2-4 Players '''
 
     def __init__(self, number_of_players=None, is_robot_game=None):
 
@@ -508,7 +500,8 @@ class Bridge:
         except OSError as e:
             print('no scorelist found', e)
 
-    def the_rules(self):
+    @classmethod
+    def rules(cls):
 
         print(f'''
         {30 * " "}Game of Bridge
@@ -563,11 +556,20 @@ class Bridge:
          A: 15
 
         The points of several rounds will be added.
-        If a player finishes a round with a 'J' his score will be
-        reduced by 20 for each 'J' on stack of his last move.
-        If a player reaches exactly 125 points, his score is back on 0!
+
+        If a player finishes a round with a 'J'
+        - his score will either be reduced by 20
+          for each 'J' of his last move - or
+        - the scores of the other players will be increased by 20
+          for each 'J' of his last move.
+        The winner of the current round decides which rule will apply.
+
+        If a player reaches exactly 125 points, his score is back on 0.
+
         When the blind was empty and therefor the stack was reshuffeled,
         the points of this round are doubled (trippled, ...).
+        This also applies to the 'J'-rule mentioned before.
+
         The player with the highest score starts the next round.
 
         The round is over once a player reaches more than 125 points.
@@ -590,14 +592,9 @@ class Bridge:
 
         self.start_round()
 
-        # else:
-        # 	pass
-        # self.pull_data_from_server()
-
     def start_round(self):
         self.number_of_rounds += 1
 
-        # if self.is_server or not self.is_online:
         deck.__init__()
 
         for player in self.player_list:
@@ -606,10 +603,6 @@ class Bridge:
         self.player = self.set_shuffler()
         self.player.play_card(is_initial_card=True)
         self.play()
-
-    # else:
-    # 	pass
-    # self.pull_data_from_server()
 
     def set_shuffler(self):
         if self.shuffler is None:
@@ -631,9 +624,6 @@ class Bridge:
         eights = 0
         aces = 0
         key = 'n'
-
-        # if self.is_client and self.is_online:
-        # 	pass  # self.pull_data_from_server()
 
         self.show_full_deck()
 
@@ -737,12 +727,39 @@ class Bridge:
                 player.show_hand(is_visible)
 
     def finish_round(self):
+        print(
+            f'\n\n{7 * " "}| * * * {self.player.name} has won this round! * * * |\n')
+
+        # evaluate the points for J on stack:
         if deck.get_top_card_from_stack().rank == 'J':
-            self.player.score -= 20 * len(
-                deck.bridge_monitor) * deck.shufflings
-        print(f'\n\n{7 * " "}| * * * {self.player.name} '
-              f'has won this round! * * * |\n')
-        self.activate_next_player()  # evaluate cards_played of last round
+            if self.player.is_robot:
+                key = random.choice(['m', 'p'])
+                if key == 'm':
+                    print(f'\n{22 * " "}{self.player.name} says:')
+                    print(f"{25 * ' '}minus for me")
+                    print(f'{21 * " "}|     SPACE    |\n')
+                elif key == 'p':
+                    print(f'\n{22 * " "}{self.player.name} says:')
+                    print(f"{19 * ' '}plus for the others")
+                    print(f'{21 * " "}|     SPACE    |\n')
+                keyboard.wait('space')
+            else:
+                print(f"\n{13 * ' '}? ? ? minus or plus for J ? ? ?\n")
+                print(f'{7 * " "}|  (m)inus for me | (p)lus for the others  |\n')
+                key = keyboard.read_hotkey(suppress=False)
+            # consider previous player has played 'J'
+            # or active player has played '6' + 'J'
+            self.player.score -= 20 * \
+                min(len(deck.cards_played), len(
+                    deck.bridge_monitor)) * deck.shufflings
+            if key == 'p':
+                for player in self.player_list:
+                    player.score += 20 * \
+                        min(len(deck.cards_played), len(deck.bridge_monitor)) * \
+                        deck.shufflings
+
+        # evaluate cards_played of last round:
+        self.activate_next_player()
         print('\n')
         for player in self.player_list:
             player.score += player.hand.count_points() * deck.shufflings
@@ -838,22 +855,22 @@ class Bridge:
             self.finish_round()
             return False
 
-        elif deck.get_top_card_from_stack().rank == '6':
+        if deck.get_top_card_from_stack().rank == '6':
             return False
 
-        elif not self.player.hand.cards:
+        if not self.player.hand.cards:
             self.show_full_deck()
-            print(f'\n\n{7 * " "}'
-                  f'| * * * {self.player.name} has won this round! * * * |\n')
+            # print(f'\n\n{7 * " "}\
+            # | * * * {self.player.name} has won this round! * * * |\n')
             keyboard.wait('space')
             self.finish_round()
             return True
 
-        elif deck.get_top_card_from_stack().rank == 'J':
-
+        if deck.get_top_card_from_stack().rank == 'J':
             if deck.cards_played:
                 self.make_choice_for_J()
                 return True
+
             '''
             next player possible, (except 6 on stack) if:
 
@@ -873,12 +890,11 @@ class Bridge:
         if deck.cards_played:
             return True
 
-        elif not deck.cards_played:
+        if not deck.cards_played:
             if not self.player.hand.possible_cards and \
                self.player.hand.cards_drawn:
                 return True
-            else:
-                return False
+            return False
 
     def play(self):
         while True:
@@ -910,7 +926,7 @@ class Bridge:
                     print(f'{21 * " "}|     SPACE    |\n')
                     keyboard.wait('space')
                 elif key == 'r':
-                    self.print_the_rules_of_the_game()
+                    Bridge.rules()
                     print(f'{21 * " "}|     SPACE    |\n')
                     keyboard.wait('space')
                 elif key == 'q':
@@ -941,8 +957,8 @@ class Bridge:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Bridge",
-                                     description=Bridge.the_rules(None))
+    parser = argparse.ArgumentParser("bridge",
+                                     description=Bridge.rules())
     parser.add_argument("--number_of_players", "-p",
                         type=int, choices=[2, 3, 4], help="number of players")
     parser.add_argument("--is_robot_game", "-r",
