@@ -279,14 +279,14 @@ class Handdeck:
         '''
         1st move:
         ---------
-        general rule:         suit   rank    J
-        if stack_card = 'J': Jsuit           J
+        general rule:          suit   rank    J
+        if stack_card == 'J': Jsuit           J
 
         2nd move:
         ---------
-        general rule:                rank
-        if stack_card = '6': suit     '6'
-        if stack_card = 'J':          'J'
+        general rule:                 rank
+        if stack_card == '6': suit     '6'
+        if stack_card == 'J':          'J'
         '''
 
         # 1st move:
@@ -851,6 +851,22 @@ class Bridge:
             return False
 
     def is_next_player_possible(self):
+        '''
+        next player possible, (except 6 on stack) if:
+
+             card   possible  card    next
+            played    card    drawn   player
+                1       1       1       Y
+                1       1       0       Y
+                1       0       1       Y
+                1       0       0       Y
+                0       1       1       N
+                0       1       0       N
+                0       0       1       Y
+                0       0       0       N       <-- must draw card
+               0/1     0/1     0/1      N       <-- & when '6'
+        '''
+
         if self.check_if_bridge():
             self.finish_round()
             return False
@@ -871,21 +887,6 @@ class Bridge:
                 self.make_choice_for_J()
                 return True
 
-            '''
-            next player possible, (except 6 on stack) if:
-
-                 card   possible  card    next
-                played    card    drawn   player
-                        1       1       1       Y
-                        1       1       0       Y
-                        1       0       1       Y
-                        1       0       0       Y
-                        0       1       1       N
-                        0       1       0       N
-                        0       0       1       Y
-                        0       0       0       N       <-- must draw card
-                       0/1     0/1     0/1      N       <-- & when '6'
-            '''
 
         if deck.cards_played:
             return True
